@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   },
   newBadgeText: {
     color: 'black',
-    fontSize: 10,
+    fontSize: 9,
   },
   detailsContainer: {
     justifyContent: 'space-between',
