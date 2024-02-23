@@ -1,147 +1,161 @@
-import { StyleSheet, Text, View, SafeAreaView, Image } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, Modal, TouchableWithoutFeedback, FlatList, TextInput} from 'react-native';
+import { CheckBox } from 'react-native-btr';
 import mockItemData from './helpers/mockData';
+import PizzaCard from './Components/PizzaCard';
+import CustomTouchable from './helpers/CustomTouchable';
+import React, {useState} from 'react';
+import ModalView from './helpers/ModalView';
 
 export default function App() {
+  const [text, onChangeText] = React.useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [activeSearchBar, setSearchBarVisible] = useState(false);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [isNewFilterActive, setIsNewFilterActive] = useState(false);
+  const toggleModal = () => setModalVisible(!modalVisible); 
+  const toggleSearchBar = () => setSearchBarVisible(!activeSearchBar)
+  const toggleFilterModal = () => setFilterModalVisible(!filterModalVisible);
+  const toggleNewFilter = () => setIsNewFilterActive(!isNewFilterActive)
+  const applyFilters = () => {
+    setFilterModalVisible(false);
+  }
+  const filteredData = mockItemData
+    .filter(item => item.title.toLowerCase().includes(text.toLowerCase()))
+    .filter(item => !isNewFilterActive || item.isNew);
   return (
-    <SafeAreaView>
-      <View style={styles.container}>
-        <View style={styles.cardContainer}>
-          <View style={styles.contentContainer}>
-            <Image
-              style={styles.image}
-              source={{ uri: mockItemData.image }}
-            />
-            <View style={styles.newBadge}>
-              <Text style={styles.newBadgeText}>NEW</Text>
-            </View>
-            <View style={styles.detailsContainer}>
-              <View style={styles.titleContainer}>
-                <Text style={styles.title}>{mockItemData.title}</Text>
+    <SafeAreaView style={styles.safeAreaFlex}>
+      <View style={styles.main}>
+        <View style={styles.contentSide}>
+          <View style={styles.headerContainer}>
+            {
+              activeSearchBar ? <TextInput
+              style={styles.input}
+              onChangeText={onChangeText}
+              placeholder='Search...'
+              value={text}
+              placeholderTextColor="red" 
+            /> :
+            null
+            }
+            <View style={styles.heartContainer}>
+              <CustomTouchable onPress={toggleModal}>
                 <Text style={styles.heartIcon}>❤️</Text>
-              </View>
+              </CustomTouchable>
+              {
+                modalVisible ? 
+                  <ModalView styles={styles} toggleModal={toggleModal} modalVisible={modalVisible} >
+                    <CustomTouchable onPress={toggleModal}>
+                      <Text style={styles.textModal}>Close Modal</Text>
+                    </CustomTouchable>
+                  </ModalView> : null
+              }
+              <CustomTouchable onPress={toggleSearchBar}>
+                <Text style={styles.heartIcon}>🔍</Text>
+              </CustomTouchable>
+            </View>
 
-              <View style={styles.priceContainer}>
-                <Text style={styles.newPrice}>New Price</Text>
-                <Text style={styles.oldPrice}>Old Price</Text>
-              </View>
-              <View style={styles.descriptionContainer}>
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode='tail'
-                  style={styles.description}
-                >
-                  {mockItemData.description}
-                </Text>
-                <View style={styles.buyContainer}>
-                  <Text style={styles.buyText}>Buy</Text>
-                  <Image style={styles.buyIcon} source={require('./assets/buylot.png')} />
+          </View>
+          <CustomTouchable onPress={toggleFilterModal} >
+            <Text style={styles.filterModal}>Filter</Text>
+          </CustomTouchable>
+          <Modal
+            transparent={true}
+            visible={filterModalVisible}
+            onRequestClose={applyFilters}>
+            <TouchableWithoutFeedback onPress={applyFilters}>
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalView} onStartShouldSetResponder={() => true}>
+                  <Text>Filter by new</Text>
+                  <CheckBox checked={isNewFilterActive} onPress={toggleNewFilter}  />
                 </View>
               </View>
-            </View>
-          </View>
+            </TouchableWithoutFeedback>
+          </Modal>
         </View>
       </View>
+      <FlatList 
+        data={filteredData}
+        renderItem={({item}) => (
+          <View style={styles.pizzaMargin} >
+            <PizzaCard mockItemData={item} />
+          </View>
+        )}
+        keyExtractor={(item, index) => index.toString()}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    height: 115,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'purple',
-    borderTopWidth: 0,
-    borderBottomWidth: 0,
+  safeAreaFlex: {
+    flex: 1
   },
-  cardContainer: {
-    backgroundColor: '#fde',
-    width: '90%',
-    height: '90%',
-    borderRadius: 10,
-    alignContent: 'center',
+  main: {
+    height: 65,
+    alignItems: 'center'
+  },
+  contentSide: {
+    width: '85%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'flex-end'
+  },
+  headerContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    justifyContent: 'flex-end',
+    alignItems: 'center'
+  },
+  heartContainer: {
+    marginLeft: 10,
+    flexDirection: 'row'
+  },
+  textModal: {
+    fontSize: 30,
+    color: 'blue'
+  },
+  filterModal: {
+    fontSize: 17,
+    fontStyle: 'italic',
+    marginTop: 5,
+    marginBottom: 5
+  },
+  pizzaMargin: {
+    marginBottom: 8,
+    padding: 5
+  },
+  input: {
+    height: 32,
+    backgroundColor: 'lightgray',
+    width: 300,
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 7
+  },
+  heartIcon: {
+    fontSize: 24,
+    padding: 2
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end', 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+  },
+  modalView: {
+    backgroundColor: "white",
+    padding: 20,
+    alignItems: 'center',
+    flex: 0.4,
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 12,
+      height: 2
     },
-    shadowOpacity: 0.58,
-    shadowRadius: 16.00,
-    elevation: 24,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    borderTopRightRadius: 20, 
+    borderTopLeftRadius: 20, 
   },
-  contentContainer: {
-    height: '80%',
-    width: '100%',
-    padding: 5,
-    flexDirection: 'row',
-  },
-  image: {
-    height: 75,
-    width: 100,
-    marginRight: 10,
-  },
-  newBadge: {
-    position: 'absolute',
-    top: -5,
-    left: 85,
-    backgroundColor: 'lightgrey',
-    borderRadius: 25,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-    borderWidth: 1,
-    borderColor: 'black',
-  },
-  newBadgeText: {
-    color: 'black',
-    fontSize: 9,
-  },
-  detailsContainer: {
-    justifyContent: 'space-between',
-    marginLeft: 5
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontSize: 22,
-  },
-  heartIcon: {},
-  priceContainer: {
-    flexDirection: 'row',
-  },
-  newPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginRight: 15,
-  },
-  oldPrice: {
-    fontSize: 16,
-    textDecorationLine: 'line-through',
-  },
-  descriptionContainer: {
-    flexDirection: 'row',
-  },
-  description: {
-    width: 150,
-    marginRight: 20,
-  },
-  buyContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buyText: {},
-  buyIcon: {
-    height: 20,
-    width: 20,
-    marginLeft: 2,
-  },
-});
+})
