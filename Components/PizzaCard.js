@@ -1,5 +1,4 @@
 import { StyleSheet, Text, View, SafeAreaView, Image } from 'react-native';
-import mockItemData from '../helpers/mockData';
 export default function PizzaCard({mockItemData}) {
   return (
     <View style={styles.container}>
@@ -44,7 +43,6 @@ export default function PizzaCard({mockItemData}) {
       </View>
   )
 }
-
 
 const styles = StyleSheet.create({
   container: {
