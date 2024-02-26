@@ -1,10 +1,13 @@
-import { StyleSheet, Text, View, SafeAreaView, Modal, TouchableWithoutFeedback, FlatList, TextInput} from 'react-native';
+import { StyleSheet, RefreshControl, Text, View, SafeAreaView, Modal, TouchableWithoutFeedback, FlatList, TextInput} from 'react-native';
 import { CheckBox } from 'react-native-btr';
 import mockItemData from './helpers/mockData';
 import PizzaCard from './Components/PizzaCard';
 import CustomTouchable from './helpers/CustomTouchable';
 import React, {useState} from 'react';
 import ModalView from './helpers/ModalView';
+import Swiper from './Components/Swiper/Swiper';
+import mockDataAfterRefresh from './helpers/mockDataAfterRefresh';
+import mockDataAfterEnd from './helpers/mockDataAfterEnd';
 
 export default function App() {
   const [text, onChangeText] = React.useState('');
@@ -12,14 +15,26 @@ export default function App() {
   const [activeSearchBar, setSearchBarVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [isNewFilterActive, setIsNewFilterActive] = useState(false);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [data, setData] = useState(mockItemData);
   const toggleModal = () => setModalVisible(!modalVisible); 
   const toggleSearchBar = () => setSearchBarVisible(!activeSearchBar)
   const toggleFilterModal = () => setFilterModalVisible(!filterModalVisible);
   const toggleNewFilter = () => setIsNewFilterActive(!isNewFilterActive)
+  const onEndReached = () => {
+    setData(currentData => [...currentData, ...mockDataAfterEnd]);
+  }
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setData(currentData => [...currentData, ...mockDataAfterRefresh]);
+      setRefreshing(false);
+    }, 3000);
+  }, []);
   const applyFilters = () => {
     setFilterModalVisible(false);
   }
-  const filteredData = mockItemData
+  const filteredData = data
     .filter(item => item.title.toLowerCase().includes(text.toLowerCase()))
     .filter(item => !isNewFilterActive || item.isNew);
   return (
@@ -44,9 +59,13 @@ export default function App() {
               {
                 modalVisible ? 
                   <ModalView styles={styles} toggleModal={toggleModal} modalVisible={modalVisible} >
-                    <CustomTouchable onPress={toggleModal}>
-                      <Text style={styles.textModal}>Close Modal</Text>
-                    </CustomTouchable>
+                    <>
+                      <CustomTouchable onPress={toggleModal}>
+                        <Text style={styles.textModal}>Close Modal</Text>
+                      </CustomTouchable>
+                      <Swiper></Swiper>
+                    </>
+                    
                   </ModalView> : null
               }
               <CustomTouchable onPress={toggleSearchBar}>
@@ -74,6 +93,8 @@ export default function App() {
         </View>
       </View>
       <FlatList 
+        onEndReached={onEndReached}
+        refreshControl={ <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         data={filteredData}
         renderItem={({item}) => (
           <View style={styles.pizzaMargin} >
@@ -138,24 +159,31 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end', 
-    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalView: {
-    backgroundColor: "white",
-    padding: 20,
+    flex: 0.8,
+    width: '100%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
     alignItems: 'center',
-    flex: 0.4,
-    alignItems: "center",
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2
+      height: 2,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 4,
     elevation: 5,
-    borderTopRightRadius: 20, 
-    borderTopLeftRadius: 20, 
   },
+  fullScreenTransparentView: {   
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
+  }
 })
